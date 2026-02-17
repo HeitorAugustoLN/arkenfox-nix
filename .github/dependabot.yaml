@@ -1,0 +1,43 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: ci
+      include: scope
+  - package-ecosystem: cargo
+    directory: "/arkenfox-nix"
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+      - cargo
+    commit-message:
+      prefix: ci
+      include: scope
+  - package-ecosystem: nix
+    directory: "/"
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+      - nix
+    commit-message:
+      prefix: chore
+      include: scope
+  - package-ecosystem: nix
+    directory: "/dev"
+    schedule:
+      interval: weekly
+    labels:
+      - dependencies
+      - nix
+      - dev
+    commit-message:
+      prefix: chore
+      include: scope

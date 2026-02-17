@@ -1,0 +1,60 @@
+name: Update preferences
+run-name: Update preferences by ${{ github.actor }}
+on:
+  schedule:
+    - cron: "0 0 * * 1" # Every week on monday at midnight UTC
+  workflow_dispatch:
+jobs:
+  generate-prefs:
+    timeout-minutes: 11
+    name: Update preferences
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Set up Nix
+        uses: cachix/install-nix-action@ab739621df7a23f52766f9ccc97f38da6b7af14f # v31.10.5
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
+        with:
+          app-id: ${{ vars.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+      - name: Configure Git
+        run: |
+          git config user.name "heitor-bot[bot]"
+          git config user.email "246902415+heitor-bot[bot]@users.noreply.github.com"
+      - name: Generate preferences
+        run: nix run .#arkenfox-nix generate
+      - name: Create Pull Request
+        id: pull-request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          body: |
+            ## Generated preferences update
+            The `user.js` files have been regenerated using `arkenfox-nix`.
+          branch: update-prefs
+          commit-message: |
+            feat: update generated prefs
+          delete-branch: true
+          labels: |
+            dependencies
+            arkenfox
+          sign-commits: true
+          title: "feat: update generated prefs"
+          token: ${{ steps.app-token.outputs.token }}
+          assignees: HeitorAugustoLN
+          reviewers: HeitorAugustoLN
+      - name: Enable auto-merge
+        if: steps.pull-request.outputs.pull-request-number
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_URL: ${{ steps.pull-request.outputs.pull-request-url }}
+        run: gh pr merge --auto --squash --delete-branch "$PR_URL"

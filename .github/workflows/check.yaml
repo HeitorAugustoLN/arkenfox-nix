@@ -1,0 +1,38 @@
+name: Flake check
+run-name: Flake check for ${{ github.ref_name }} by ${{ github.actor }}
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  check:
+    timeout-minutes: 32
+    name: Check flake on ${{ matrix.system }}
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    strategy:
+      matrix:
+        include:
+          - system: aarch64-darwin
+            runner: macos-latest
+          - system: aarch64-linux
+            runner: ubuntu-24.04-arm
+          - system: x86_64-linux
+            runner: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Set up Nix
+        uses: cachix/install-nix-action@ab739621df7a23f52766f9ccc97f38da6b7af14f # v31.10.5
+      - name: Set up Cachix
+        uses: cachix/cachix-action@1eb2ef646ac0255473d23a5907ad7b04ce94065c # v17
+        with:
+          name: heitor
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      - name: Run flake check
+        run: nix flake check --accept-flake-config

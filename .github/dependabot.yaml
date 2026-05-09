@@ -18,7 +18,7 @@ updates:
       - dependencies
       - cargo
     commit-message:
-      prefix: ci
+      prefix: feat
       include: scope
   - package-ecosystem: nix
     directory: "/"
